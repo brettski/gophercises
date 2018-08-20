@@ -7,11 +7,13 @@ import (
 	"encoding/csv"
 	"strings"
 	"time"
+	"math/rand"
 )
 
 func main() {
 	csvFilename := flag.String("csv", "problems.csv", "a csv in the format of 'question, answer'")
 	timeLimit := flag.Int("limit", 30, "The time limit for the quiz in seconds")
+	randomOrder := flag.Bool("rand", false, "Randomize the order of the questions")
 	flag.Parse()
 
 	file, err := os.Open(*csvFilename)
@@ -27,6 +29,10 @@ func main() {
 	}
 	
 	problems := parseLines(lines)
+	if *randomOrder {
+		problems = randomProblems(problems)
+	}
+
 	timer := time.NewTimer(time.Duration(*timeLimit) * time.Second)	
 	correct := 0
 	for i, p := range problems {
@@ -63,6 +69,17 @@ func parseLines(lines [][]string) []problem {
 		}
 	}
 	return ret
+}
+
+func randomProblems(prob []problem) []problem {
+	final := make([]problem, len(prob))
+	rand.Seed(time.Now().UTC().UnixNano())
+	perm := rand.Perm(len(prob))
+
+	for i, value := range perm {
+		final[value] = prob[i]
+	}
+	return final
 }
 
 type problem struct {
